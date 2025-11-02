@@ -1,6 +1,7 @@
 "use client";
 
 import { useSelector, useDispatch } from "react-redux";
+import { toast } from "sonner";
 import type { RootState } from "@/app/store";
 import { resetFilters, toggleDialog } from "@/app/store/slices/filterSlice";
 import { useState, useEffect } from "react";
@@ -38,64 +39,97 @@ export default function ProductsPage({ initialProducts }: { initialProducts: any
   const totalPages = Math.ceil(products.length / pageSize);
 
   // ✅ Fetch all products
-  async function fetchProducts() {
+async function fetchProducts() {
+  try {
+    toast("Fetching products...", {
+      description: "Please wait while we load all products.",
+    });
+
+    const res = await fetch(`${PRODUCT_API_URL}`);
+    const data = await res.json();
+
+    if (data.success && Array.isArray(data.data)) {
+      setProducts(data.data);
+
+      toast.success("✅ Products loaded successfully!", {
+        description: `Showing ${data.data.length} products.`,
+      });
+    } else {
+      console.warn("Unexpected API response:", data);
+      toast.warning("⚠️ Unexpected API response.", {
+        description: "The server returned an invalid response format.",
+      });
+    }
+  } catch (error) {
+    console.error("❌ Error fetching products:", error);
+    toast.error("❌ Failed to fetch products.", {
+      description: "Please check your network connection or API server.",
+    });
+  } finally {
+    setLoading(false);
+  }
+}
+
+// ✅ Initial load
+useEffect(() => {
+  setLoading(false);
+  dispatch(toggleDialog(true));
+}, [dispatch]);
+
+// ✅ Fetch filtered data
+useEffect(() => {
+  const fetchFilteredData = async () => {
     try {
-      const res = await fetch(`${PRODUCT_API_URL}`);
-      const data = await res.json();
+      if (!filters || Object.keys(filters).length === 0) return;
+
+      setProducts([]);
+      setLoading(true);
+
+      toast("🔍 Applying filters...", {
+        description: "Please wait while we fetch filtered products.",
+      });
+
+      const encodedFilters = encodeURIComponent(JSON.stringify(filters));
+      const response = await fetch(`${SEGMENT_API_URL}?filters=${encodedFilters}`);
+      const data = await response.json();
 
       if (data.success && Array.isArray(data.data)) {
         setProducts(data.data);
+
+        toast.success("🎯 Filters applied successfully!", {
+          description: `Found ${data.data.length} matching products.`,
+        });
       } else {
         console.warn("Unexpected API response:", data);
+        setProducts([]);
+        toast.warning("⚠️ Unexpected response.", {
+          description: "Filter results are empty or malformed.",
+        });
       }
     } catch (error) {
-      console.error("❌ Error fetching products:", error);
+      console.error("❌ Error fetching filtered data:", error);
+      setProducts([]);
+      toast.error("❌ Failed to apply filters.", {
+        description: "Please check your connection or filter syntax.",
+      });
     } finally {
       setLoading(false);
     }
-  }
-
-  // ✅ Initial load
-  useEffect(() => {
-    setLoading(false);
-    dispatch(toggleDialog(true));
-  }, [dispatch]);
-
-  // ✅ Fetch filtered data
-  useEffect(() => {
-    const fetchFilteredData = async () => {
-      try {
-        if (!filters || Object.keys(filters).length === 0) return;
-        setProducts([]);
-        setLoading(true);
-
-        const encodedFilters = encodeURIComponent(JSON.stringify(filters));
-        const response = await fetch(`${SEGMENT_API_URL}?filters=${encodedFilters}`);
-        const data = await response.json();
-
-        if (data.success && Array.isArray(data.data)) {
-          setProducts(data.data);
-        } else {
-          console.warn("Unexpected API response:", data);
-          setProducts([]);
-        }
-      } catch (error) {
-        console.error("❌ Error fetching filtered data:", error);
-        setProducts([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchFilteredData();
-  }, [filters]);
-
-  // ✅ Clear filters
-  const handleShowAll = async () => {
-    dispatch(resetFilters());
-    dispatch(toggleDialog(true));
-    fetchProducts();
   };
+
+  fetchFilteredData();
+}, [filters]);
+
+// ✅ Clear filters
+const handleShowAll = async () => {
+  dispatch(resetFilters());
+  dispatch(toggleDialog(true));
+  await fetchProducts();
+
+  toast("🔄 Filters cleared", {
+    description: "All products are now visible.",
+  });
+};
 
   return (
     <div className="p-4 sm:p-6 md:p-8 space-y-6 flex flex-col h-screen">
@@ -305,35 +339,69 @@ export default function ProductsPage({ initialProducts }: { initialProducts: any
                       whileHover={{ scale: 1.02 }}
                       transition={{ type: "spring", stiffness: 200 }}
                     >
-                      <Card className="group border border-border/60 bg-gradient-to-br from-background via-card to-muted/30 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-primary/70 hover:bg-card/80">
-                        <CardHeader className="pb-2">
-                          <CardTitle className="flex justify-between items-center text-lg font-semibold tracking-tight text-foreground">
-                            <span className="group-hover:text-primary transition-colors duration-300">
-                              {p.title}
-                            </span>
-                            <Badge
-                              variant={p.stock_status === "instock" ? "default" : "secondary"}
-                              className="px-2 py-1 text-xs rounded-md"
-                            >
-                              {p.stock_status.charAt(0).toUpperCase() + p.stock_status.slice(1)}
-                            </Badge>
-                          </CardTitle>
-                        </CardHeader>
+                     <Card
+  className="group relative overflow-hidden border border-border/50 
+  bg-gradient-to-br from-background via-card to-muted/40 
+  rounded-2xl shadow-sm hover:shadow-[0_4px_25px_rgba(147,51,234,0.2)] 
+  hover:-translate-y-[4px] hover:border-primary/70 transition-all duration-500 ease-in-out"
+>
+  {/* 🌈 Soft glowing gradient overlay */}
+  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none bg-gradient-to-r from-primary/10 via-purple-500/10 to-indigo-500/10 blur-xl" />
 
-                        <CardContent className="text-sm text-muted-foreground space-y-3 font-sans leading-relaxed">
-                          <p>
-                            <span className="font-medium text-foreground/80">Category:</span> {p.category}
-                          </p>
-                          <p>
-                            <span className="font-medium text-foreground/80">Price:</span>{" "}
-                            <span className="text-primary font-semibold">${p.price}</span>
-                          </p>
-                          <p>
-                            <span className="font-medium text-foreground/80">Tags:</span>{" "}
-                            {p.tags?.join(", ") || "—"}
-                          </p>
-                        </CardContent>
-                      </Card>
+  <CardHeader className="pb-2 relative z-10">
+    <CardTitle
+      className="flex justify-between items-center text-lg font-semibold tracking-tight 
+      text-foreground group-hover:text-primary transition-colors duration-300"
+    >
+      <span className="truncate max-w-[75%]">{p.title}</span>
+      <Badge
+        variant={p.stock_status === "instock" ? "default" : "secondary"}
+        className={`px-2 py-1 text-xs rounded-lg border-0 shadow-sm ${
+          p.stock_status === "instock"
+            ? "bg-gradient-to-r from-green-500/90 to-emerald-600/90 text-white"
+            : "bg-gradient-to-r from-gray-400/80 to-gray-500/80 text-white"
+        }`}
+      >
+        {p.stock_status.charAt(0).toUpperCase() + p.stock_status.slice(1)}
+      </Badge>
+    </CardTitle>
+  </CardHeader>
+
+  <CardContent className="relative z-10 text-sm text-muted-foreground space-y-3 font-sans leading-relaxed">
+    <div className="flex flex-col gap-1">
+      <p>
+        <span className="font-medium text-foreground/80">Category:</span>{" "}
+        <span className="text-foreground">{p.category || "—"}</span>
+      </p>
+      <p>
+        <span className="font-medium text-foreground/80">Price:</span>{" "}
+        <span className="text-primary font-semibold tracking-wide">
+          ${Number(p.price).toFixed(2)}
+        </span>
+      </p>
+      <p>
+        <span className="font-medium text-foreground/80">Tags:</span>{" "}
+        <span className="italic text-foreground/70">
+          {p.tags?.join(", ") || "—"}
+        </span>
+      </p>
+    </div>
+
+    {/* 💎 Stylish separator line */}
+    <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent my-2" />
+
+    {/* ✨ Subtle bottom accent */}
+    <div className="flex items-center justify-between">
+      <span className="text-xs text-muted-foreground">Product ID: {p.id}</span>
+      {p.on_sale && (
+        <Badge className="px-2 py-[2px] text-[10px] rounded-full font-medium bg-pink-600/90 text-white shadow-sm hover:bg-pink-700">
+          On Sale
+        </Badge>
+      )}
+    </div>
+  </CardContent>
+</Card>
+
                     </motion.div>
                   ))}
                 </motion.div>

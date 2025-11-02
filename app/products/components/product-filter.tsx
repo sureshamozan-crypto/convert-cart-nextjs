@@ -1,6 +1,7 @@
 "use client";
 
 import { useDispatch, useSelector } from "react-redux";
+import { toast } from "sonner";
 import { RootState } from "@/app/store";
 import {
   setFilterText,
@@ -58,7 +59,10 @@ export function ProductFilterDialog() {
   // ✅ Handle filter evaluation
   const handleEvaluate = async () => {
   console.log("✅ Evaluating Filters:\n", filterText);
-  if (!filterText.trim()) return alert("Please enter at least one filter.");
+  if (!filterText.trim()) {
+    toast.warning("⚠️ Please enter at least one filter.");
+    return;
+  }
 
   try {
     setLoading(true);
@@ -102,13 +106,18 @@ export function ProductFilterDialog() {
 
     // 2️⃣ Dispatch to Redux and close dialog
     dispatch(setFilters(filters));
+    toast.success("🎯 Filters applied successfully!", {
+      description: "Your filter conditions have been evaluated.",
+    });
     setTimeout(() => {
       setFilterText("");
       dispatch(toggleDialog(true)); // closes the dialog
     }, 500);
   } catch (err) {
     console.error("❌ Filter evaluation failed:", err);
-    alert("Something went wrong while evaluating filters.");
+     toast.error("❌ Something went wrong!", {
+      description: "Unable to evaluate filters. Please check your syntax.",
+    });
   } finally {
     setLoading(false);
   }
@@ -118,6 +127,9 @@ export function ProductFilterDialog() {
   const handleReset = () => {
     setFilterText("");
     dispatch(resetFilters());
+      toast("🔄 Filters cleared", {
+    description: "All applied filter conditions have been reset.",
+  });
   };
 
   return (
