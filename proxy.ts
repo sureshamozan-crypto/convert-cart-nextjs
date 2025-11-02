@@ -19,10 +19,10 @@ export async function proxy(req: Request) {
   }
 
   // Redirect unauthenticated users
-  if (!token) {
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
-  }
+  // if (!token) {
+  //   url.pathname = "/login";
+  //   return NextResponse.redirect(url);
+  // }
 
   // Redirect authenticated users away from login
   if (token && pathname === "/login") {

@@ -16,6 +16,7 @@ export default function LoginPage() {
   const router = useRouter(); // ✅ initialize router
 
   const handleLogin = () => {
+     document.cookie = "dummy_token=12345; path=/; max-age=3600";
     setLoading(true);
     // ⏳ Simulate auth process
     setTimeout(() => {
