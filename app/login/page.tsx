@@ -1,6 +1,5 @@
 "use client";
 
-import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Code2 } from "lucide-react";
 import Image from "next/image";
+import { signIn, signOut, useSession } from "next-auth/react";
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
@@ -143,7 +143,7 @@ export default function LoginPage() {
                            shadow-md hover:shadow-lg border border-gray-200"
                 onClick={() => {
                   setLoading(true);
-                  signIn("google", { callbackUrl: "/" });
+                  signIn("google", { callbackUrl: "/products" });
                 }}
                 disabled={loading}
               >
