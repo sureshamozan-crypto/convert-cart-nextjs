@@ -1,36 +1,58 @@
-# 🛒 Convert Cart Dashboard (Next.js 16)
+---
 
-Welcome to the **Convert Cart Dashboard**, a modern and responsive web interface for managing shopping cart operations with real-time precision.  
-This frontend module provides users with a clean, efficient, and dynamic interface to add, edit, and manage products in their shopping cart — powered by **Next.js 16**.
+## 🏗️ System Architecture Overview
+
+The **Convert Cart System** is designed using a **microservices architecture** for scalability, modularity, and independent deployment.  
+Each service handles a specific domain — from product data ingestion to UI visualization and dynamic filtering.
 
 ---
 
-## ✨ Key Highlights
+### 🧩 1. Product Service (Node.js + Express + MongoDB Atlas)
 
-- 🧾 **Fully Responsive UI** — Optimized for mobile, tablet, and desktop  
-- 🎨 **Modern Interface** — Built using **ShadCN UI** and **Tailwind CSS**  
-- 🔄 **Seamless API Integration** — Connects to backend microservices  
-- 🧠 **Smooth UX** — Simplified user flows with animated transitions  
+The **Product Service** acts as the data ingestion and management layer.
+
+#### 🔹 Core Responsibilities:
+- 🔄 **Integrates with WooCommerce’s REST API** to import and sync product data  
+- 📦 **Ingests and stores product details** (title, category, price, tags, stock status) into **MongoDB Atlas**  
+- 🧾 **Provides RESTful endpoints** for product listing, pagination, and sorting  
+- 💾 **Maintains a local cache** of WooCommerce products for faster access  
+
+#### 🔹 Example API Endpoints:
+| Endpoint | Method | Description |
+|-----------|---------|-------------|
+| `/api/products` | `GET` | Fetch all products with pagination and filters |
+| `/api/products/:id` | `GET` | Get product by ID |
+| `/api/products/sync` | `POST` | Sync and update data from WooCommerce |
+
+#### 🧠 Sample Flow:
+1. Connect to **WooCommerce REST API** using API credentials  
+2. Fetch product list and transform it into a local data structure  
+3. Insert or update products in **MongoDB Atlas**  
+4. Serve data to frontend and other microservices  
 
 ---
 
-## 🖥️ Technology Stack
+### 🧠 2. Segment Service (Node.js + Express)
 
-| Layer | Technology |
-|--------|-------------|
-| **Frontend Framework** | Next.js 16 (App Router + Server Components) |
-| **Language** | TypeScript |
-| **UI Library** | ShadCN UI + Tailwind CSS |
-| **State Management** | Redux Toolkit |
-| **Animations** | Framer Motion |
-| **Backend API** | Node.js + Express (Product & Segment Services) |
-| **Deployment** | Vercel / AWS EC2 |
+The **Segment Service** handles filtering, segmentation, and advanced querying logic.  
 
----
+#### 🔹 Core Responsibilities:
+- ⚙️ **Filters products** based on multiple dynamic criteria (category, price, tags, sale status, etc.)  
+- 🧩 **Processes rules** defined in a simple **text-based rule editor**  
+- 🧮 **Returns filtered datasets** to the Next.js frontend  
+- 🔌 **Integrates seamlessly with Product Service API** for real-time data  
 
-## ⚙️ Getting Started
+#### 🔹 Example API Endpoints:
+| Endpoint | Method | Description |
+|-----------|---------|-------------|
+| `/api/segments` | `GET` | Apply filters and return matching products |
 
-### 1️⃣ Clone the repository
-```bash
-git clone https://github.com/sureshamozan-crypto/convert-cart-nextjs.git
-cd convert-cart-nextjs
+#### 🧠 Example Rule JSON:
+```json
+{
+  "filters": {
+    "category": "Drinks",
+    "price": { "$lt": 50 },
+    "stock_status": "instock"
+  }
+}
