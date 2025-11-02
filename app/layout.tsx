@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Convert Cart Service | Product & Segment Management",
+  title: "Convert Cart Service | Task",
   description:
     "A microservice-based product and segment management platform built with Node.js, Express.js, and Next.js 16. Fetches WooCommerce products, syncs data with MongoDB Atlas, and provides real-time filtering with Redux Toolkit integration.",
     icons: {
