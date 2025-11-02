@@ -58,78 +58,75 @@ export function ProductFilterDialog() {
 
   // ✅ Handle filter evaluation
   const handleEvaluate = async () => {
-  console.log("✅ Evaluating Filters:\n", filterText);
-  if (!filterText.trim()) {
-    toast.warning("⚠️ Please enter at least one filter.");
-    return;
-  }
+    console.log("✅ Evaluating Filters:\n", filterText);
+    if (!filterText.trim()) return alert("Please enter at least one filter.");
 
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    // 1️⃣ Parse text into structured JSON filters
-    const filters: Record<
-      string,
-      { type: string; value: string | number | string[] }
-    > = {};
+      // 1️⃣ Parse text into structured JSON filters
+      const filters: Record<
+        string,
+        { type: string; value: string | number | string[] }
+      > = {};
 
-    const lines = filterText
-      .split("\n")
-      .map((l) => l.trim())
-      .filter(Boolean);
+      const lines = filterText
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean);
 
-    for (const line of lines) {
-      // Match: field operator value  (supports =, ==, >=, <=, >, <)
-      const match = line.match(/([^><=!]+)\s*([><=!]+)\s*(.*)/);
-      if (!match) continue;
+      for (const line of lines) {
+        // Match: field operator value  (supports =, ==, >=, <=, >, <)
+        const match = line.match(/([^><=!]+)\s*([><=!]+)\s*(.*)/);
+        if (!match) continue;
 
-      const [, field, operator, rawValue] = match;
-      let value: string | number | string[] = rawValue.trim();
+        const [, field, operator, rawValue] = match;
+        let value: string | number | string[] = rawValue.trim();
 
-      // Remove surrounding quotes from strings like "The Let Them Theory Book"
-      if ((value as string).startsWith('"') && (value as string).endsWith('"')) {
-        value = (value as string).slice(1, -1);
+        // Remove surrounding quotes from strings like "The Let Them Theory Book"
+        if ((value as string).startsWith('"') && (value as string).endsWith('"')) {
+          value = (value as string).slice(1, -1);
+        }
+
+        // Convert numeric strings to numbers
+        if (!isNaN(Number(value)) && operator !== "==") {
+          value = Number(value);
+        }
+
+        // ✅ Special handling for 'tags' (convert to array)
+        if (field.trim() === "tags") {
+          value = [(value as string).trim()];
+        }
+
+        filters[field.trim()] = { type: mapOperator(operator), value };
       }
 
-      // Convert numeric strings to numbers
-      if (!isNaN(Number(value)) && operator !== "==") {
-        value = Number(value);
-      }
-
-      // ✅ Special handling for 'tags' (convert to array)
-      if (field.trim() === "tags") {
-        value = [(value as string).trim()];
-      }
-
-      filters[field.trim()] = { type: mapOperator(operator), value };
+      // 2️⃣ Dispatch to Redux and close dialog
+      dispatch(setFilters(filters));
+      toast.success("🎯 Filters applied successfully!", {
+        description: "Your filter conditions have been evaluated.",
+      });
+      setTimeout(() => {
+        setFilterText("");
+        dispatch(toggleDialog(true)); // closes the dialog
+      }, 500);
+    } catch (err) {
+      console.error("❌ Filter evaluation failed:", err);
+      toast.error("❌ Something went wrong!", {
+        description: "Unable to evaluate filters. Please check your syntax.",
+      });
+    } finally {
+      setLoading(false);
     }
-
-    // 2️⃣ Dispatch to Redux and close dialog
-    dispatch(setFilters(filters));
-    toast.success("🎯 Filters applied successfully!", {
-      description: "Your filter conditions have been evaluated.",
-    });
-    setTimeout(() => {
-      setFilterText("");
-      dispatch(toggleDialog(true)); // closes the dialog
-    }, 500);
-  } catch (err) {
-    console.error("❌ Filter evaluation failed:", err);
-     toast.error("❌ Something went wrong!", {
-      description: "Unable to evaluate filters. Please check your syntax.",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   // ✅ Reset filters
   const handleReset = () => {
     setFilterText("");
     dispatch(resetFilters());
-      toast("🔄 Filters cleared", {
-    description: "All applied filter conditions have been reset.",
-  });
+    toast("🔄 Filters cleared", {
+      description: "All applied filter conditions have been reset.",
+    });
   };
 
   return (
@@ -200,7 +197,7 @@ export function ProductFilterDialog() {
                 />
               </div>
 
-           <FilterExample />
+              <FilterExample />
 
             </div>
 

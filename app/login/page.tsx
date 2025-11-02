@@ -12,11 +12,11 @@ import { Code2 } from "lucide-react";
 import Image from "next/image";
 
 export default function LoginPage() {
- const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const router = useRouter(); // ✅ initialize router
 
   const handleLogin = () => {
-     document.cookie = "dummy_token=12345; path=/; max-age=3600";
+    document.cookie = "dummy_token=12345; path=/; max-age=3600";
     setLoading(true);
     // ⏳ Simulate auth process
     setTimeout(() => {
@@ -107,7 +107,7 @@ export default function LoginPage() {
 
               {/* Sign-In Button */}
               <Button
-               onClick={handleLogin}
+                onClick={handleLogin}
                 disabled={loading}
                 className="mt-6 w-full bg-gradient-to-r from-primary via-purple-500 to-fuchsia-600 
                            text-white font-medium text-sm sm:text-base 

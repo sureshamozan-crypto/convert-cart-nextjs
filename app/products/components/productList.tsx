@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LayoutList, TableIcon, XCircle } from "lucide-react";
+import { LayoutList, TableIcon, XCircle , Eye, Pencil, Trash2} from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { PageTitle } from "@/app/products/components/header";
 import { LoaderV1 } from "@/app/products/components/loader";
@@ -130,6 +130,33 @@ const handleShowAll = async () => {
     description: "All products are now visible.",
   });
 };
+
+function handleView(product: any) {
+  toast("👁 Viewing product details", {
+    description: `${product.title} (${product.category})`,
+  });
+}
+
+function handleEdit(product: any) {
+  toast.info("✏️ Editing product", {
+    description: `Product: ${product.title}`,
+  });
+  // You can open an edit modal or redirect here
+}
+
+async function handleDelete(id: string) {
+  const confirmDelete = confirm("Are you sure you want to delete this product?");
+  if (!confirmDelete) return;
+
+  try {
+    toast.success("🗑 Product deleted successfully");
+    // Refresh product list
+  } catch (err) {
+    toast.error("❌ Failed to delete product", {
+      description: "Please try again later.",
+    });
+  }
+}
 
   return (
     <div className="p-4 sm:p-6 md:p-8 space-y-6 flex flex-col h-screen">
@@ -320,6 +347,56 @@ const handleShowAll = async () => {
                               {p.stock_status.charAt(0).toUpperCase() + p.stock_status.slice(1)}
                             </Badge>
                           </TableCell>
+                         
+<TooltipProvider>
+  <div className="flex items-center gap-2">
+    {/* 🟦 View Button */}
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          size="icon"
+          className="h-8 w-8 rounded-md bg-gray-900 text-white hover:bg-gray-600 cursor-pointer active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md"
+          onClick={() => handleView(p)}
+        >
+          <Eye className="h-4 w-4" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="top">View</TooltipContent>
+    </Tooltip>
+
+    {/* 🟣 Edit Button */}
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          size="icon"
+          className="h-8 w-8 rounded-md bg-gray-900 text-white hover:bg-gray-600 cursor-pointer active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md"
+          onClick={() => handleEdit(p)}
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="top">Edit</TooltipContent>
+    </Tooltip>
+
+    {/* 🔴 Delete Button */}
+    <Tooltip>
+      <TooltipTrigger asChild>
+      <Button
+  size="icon"
+  variant="default"
+  className="h-8 w-8 rounded-md bg-gray-900 text-white hover:bg-gray-600 cursor-pointer active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md"
+  onClick={() => handleDelete(p._id)}
+>
+  <Trash2 className="h-4 w-4" />
+</Button>
+
+      </TooltipTrigger>
+      <TooltipContent side="top">Delete</TooltipContent>
+    </Tooltip>
+  </div>
+</TooltipProvider>
+
+
                         </TableRow>
                       ))}
                     </TableBody>

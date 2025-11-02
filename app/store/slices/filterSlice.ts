@@ -29,7 +29,7 @@ export const filterSlice = createSlice({
       state.filterText = "";
       state.filters = {};
     },
-      toggleDialog: (state, action: PayloadAction<boolean>) => {
+    toggleDialog: (state, action: PayloadAction<boolean>) => {
       state.dialogIsClosed = action.payload;
     },
   },
