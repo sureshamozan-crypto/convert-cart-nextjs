@@ -76,8 +76,9 @@ const SEGMENT_API_URL = process.env.NEXT_PUBLIC_SEGMENT_API;
         const encodedFilters = encodeURIComponent(JSON.stringify(filters));
         const response = await fetch(`${SEGMENT_API_URL}?filters=${encodedFilters}`);
         const data = await response.json();
-
+        console.log(data.success && Array.isArray(data.data));
         if (data.success && Array.isArray(data.data)) {
+           setProducts(data.data);
           setProducts(data.data);
         } else {
           console.warn("Unexpected API response:", data);
