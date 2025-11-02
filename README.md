@@ -47,7 +47,7 @@ The **Segment Service** handles filtering, segmentation, and advanced querying l
 |-----------|---------|-------------|
 | `/api/segments` | `GET` | Apply filters and return matching products |
 
-![Filter UI Example](https://github.com/sureshamozan-crypto/convert-cart-nextjs/blob/e65c4eb4c6505e1b0533c64bf8c66f3834604d4b/ou-1.png?raw=true" alt="Filter UI Example" width="100")
+![Filter UI Example](https://github.com/sureshamozan-crypto/convert-cart-nextjs/blob/e65c4eb4c6505e1b0533c64bf8c66f3834604d4b/ou-1.png)
 
 #### 🧠 Example Rule JSON:
 ```json
