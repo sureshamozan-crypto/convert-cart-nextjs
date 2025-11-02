@@ -35,10 +35,13 @@ export default function ProductsPage({ initialProducts }: { initialProducts: any
   const visibleProducts = products.slice(startIndex, endIndex);
   const totalPages = Math.ceil(products.length / pageSize);
 
+ const PRODUCT_API_URL = process.env.NEXT_PUBLIC_PRODUCT_API;
+const SEGMENT_API_URL = process.env.NEXT_PUBLIC_SEGMENT_API;
+
   // ✅ Fetch all products
   async function fetchProducts() {
     try {
-      const res = await fetch("http://43.204.228.212/api/products");
+      const res = await fetch(`${PRODUCT_API_URL}`);
       const data = await res.json();
 
       if (data.success && Array.isArray(data.data)) {
@@ -71,7 +74,7 @@ export default function ProductsPage({ initialProducts }: { initialProducts: any
         setLoading(true);
 
         const encodedFilters = encodeURIComponent(JSON.stringify(filters));
-        const response = await fetch(`http://localhost:4002/api/segments?filters=${encodedFilters}`);
+        const response = await fetch(`${SEGMENT_API_URL}?filters=${encodedFilters}`);
         const data = await response.json();
 
         if (data.success && Array.isArray(data.data)) {
