@@ -26,6 +26,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Filter, RotateCcw, FilterIcon } from "lucide-react";
+import { FilterExample } from './filterExample'
 
 // 🧠 Helper function to map operators to standard types
 function mapOperator(op: string) {
@@ -56,55 +57,68 @@ export function ProductFilterDialog() {
 
   // ✅ Handle filter evaluation
   const handleEvaluate = async () => {
-    console.log("✅ Evaluating Filters:\n", filterText);
-    if (!filterText.trim()) return alert("Please enter at least one filter.");
+  console.log("✅ Evaluating Filters:\n", filterText);
+  if (!filterText.trim()) return alert("Please enter at least one filter.");
 
-    try {
-      setLoading(true);
+  try {
+    setLoading(true);
 
-      // 1️⃣ Parse text into structured JSON filters
-      const filters: Record<string, { type: string; value: string | number }> =
-        {};
-      const lines = filterText
-        .split("\n")
-        .map((l) => l.trim())
-        .filter(Boolean);
+    // 1️⃣ Parse text into structured JSON filters
+    const filters: Record<
+      string,
+      { type: string; value: string | number | string[] }
+    > = {};
 
-      for (const line of lines) {
-        const match = line.match(/([^><=!]+)\s*([><=!]+)\s*(.*)/);
-        if (!match) continue;
+    const lines = filterText
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean);
 
-        const [, field, operator, rawValue] = match;
-        const value = isNaN(Number(rawValue))
-          ? rawValue.trim()
-          : Number(rawValue.trim());
+    for (const line of lines) {
+      // Match: field operator value  (supports =, ==, >=, <=, >, <)
+      const match = line.match(/([^><=!]+)\s*([><=!]+)\s*(.*)/);
+      if (!match) continue;
 
-        filters[field.trim()] = { type: mapOperator(operator), value };
+      const [, field, operator, rawValue] = match;
+      let value: string | number | string[] = rawValue.trim();
+
+      // Remove surrounding quotes from strings like "The Let Them Theory Book"
+      if ((value as string).startsWith('"') && (value as string).endsWith('"')) {
+        value = (value as string).slice(1, -1);
       }
 
-      // 2️⃣ Dispatch to Redux and close dialog
-      dispatch(setFilters(filters));
-      setTimeout(() => {
-        setFilterText("");
-        dispatch(toggleDialog(true)); // closes the dialog
-      }, 500);
-    } catch (err) {
-      console.error("❌ Filter evaluation failed:", err);
-      alert("Something went wrong while evaluating filters.");
-    } finally {
-      setLoading(false);
+      // Convert numeric strings to numbers
+      if (!isNaN(Number(value)) && operator !== "==") {
+        value = Number(value);
+      }
+
+      // ✅ Special handling for 'tags' (convert to array)
+      if (field.trim() === "tags") {
+        value = [(value as string).trim()];
+      }
+
+      filters[field.trim()] = { type: mapOperator(operator), value };
     }
-  };
+
+    // 2️⃣ Dispatch to Redux and close dialog
+    dispatch(setFilters(filters));
+    setTimeout(() => {
+      setFilterText("");
+      dispatch(toggleDialog(true)); // closes the dialog
+    }, 500);
+  } catch (err) {
+    console.error("❌ Filter evaluation failed:", err);
+    alert("Something went wrong while evaluating filters.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   // ✅ Reset filters
   const handleReset = () => {
     setFilterText("");
     dispatch(resetFilters());
   };
-
-  useEffect(() => {
-    console.log(dialogIsClosed);
-  }, [dialogIsClosed]);
 
   return (
     <TooltipProvider>
@@ -174,12 +188,8 @@ export function ProductFilterDialog() {
                 />
               </div>
 
-              <p className="text-xs text-muted-foreground">
-                Examples:{" "}
-                <span className="font-medium">price &gt; 5000</span>,{" "}
-                <span className="font-medium">category = Smartphones</span>,{" "}
-                <span className="font-medium">stock_status = instock</span>
-              </p>
+           <FilterExample />
+
             </div>
 
             {/* ⚙️ Action Buttons */}

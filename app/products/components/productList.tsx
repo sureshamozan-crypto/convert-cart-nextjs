@@ -5,7 +5,6 @@ import type { RootState } from "@/app/store";
 import { resetFilters, toggleDialog } from "@/app/store/slices/filterSlice";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -29,14 +28,14 @@ export default function ProductsPage({ initialProducts }: { initialProducts: any
   const filters = useSelector((state: RootState) => state.filters.filters);
   const dispatch = useDispatch();
 
+  const PRODUCT_API_URL = process.env.NEXT_PUBLIC_PRODUCT_API;
+  const SEGMENT_API_URL = process.env.NEXT_PUBLIC_SEGMENT_API;
+
   // Pagination logic
   const startIndex = (page - 1) * pageSize;
   const endIndex = startIndex + pageSize;
   const visibleProducts = products.slice(startIndex, endIndex);
   const totalPages = Math.ceil(products.length / pageSize);
-
- const PRODUCT_API_URL = process.env.NEXT_PUBLIC_PRODUCT_API;
-const SEGMENT_API_URL = process.env.NEXT_PUBLIC_SEGMENT_API;
 
   // ✅ Fetch all products
   async function fetchProducts() {
@@ -66,19 +65,15 @@ const SEGMENT_API_URL = process.env.NEXT_PUBLIC_SEGMENT_API;
   useEffect(() => {
     const fetchFilteredData = async () => {
       try {
-        // Skip if no filters
         if (!filters || Object.keys(filters).length === 0) return;
-
-        // Clear previous data and show loader
         setProducts([]);
         setLoading(true);
 
         const encodedFilters = encodeURIComponent(JSON.stringify(filters));
         const response = await fetch(`${SEGMENT_API_URL}?filters=${encodedFilters}`);
         const data = await response.json();
-        console.log(data.success && Array.isArray(data.data));
+
         if (data.success && Array.isArray(data.data)) {
-           setProducts(data.data);
           setProducts(data.data);
         } else {
           console.warn("Unexpected API response:", data);
@@ -106,10 +101,8 @@ const SEGMENT_API_URL = process.env.NEXT_PUBLIC_SEGMENT_API;
     <div className="p-4 sm:p-6 md:p-8 space-y-6 flex flex-col h-screen">
       {/* 🧭 Header Section */}
       <div className="flex items-center justify-between w-full flex-wrap gap-2 sm:gap-4">
-        {/* ✅ Left Side — Title and Subtitle */}
         <PageTitle title="Products" subtitle="Manage and view all available products" />
 
-        {/* ✅ Right Side — View & Filter Buttons */}
         <TooltipProvider>
           <div className="flex items-center gap-2 shrink-0">
             {/* Table View */}
@@ -150,7 +143,6 @@ const SEGMENT_API_URL = process.env.NEXT_PUBLIC_SEGMENT_API;
               <TooltipContent>Card View</TooltipContent>
             </Tooltip>
 
-            {/* Filter Dialog */}
             <ProductFilterDialog />
           </div>
         </TooltipProvider>
@@ -192,44 +184,39 @@ const SEGMENT_API_URL = process.env.NEXT_PUBLIC_SEGMENT_API;
               )}
             </div>
 
-          {/* ✅ Right Side — Page Size Selector + Page Info */}
-<div className="flex items-center justify-end flex-wrap gap-2 sm:gap-3">
-  {/* 🔹 Rows per page selector */}
-  <div className="flex items-center gap-1.5">
-    <Select
-      value={pageSize.toString()}
-      onValueChange={(value) => {
-        setPageSize(Number(value));
-        setPage(1); // reset to first page
-      }}
-    >
-      <SelectTrigger className="h-7 w-[70px] sm:w-[90px] text-[11px] sm:text-xs">
-        <SelectValue placeholder="Rows" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="10">10</SelectItem>
-        <SelectItem value="20">20</SelectItem>
-        <SelectItem value="50">50</SelectItem>
-        <SelectItem value="100">100</SelectItem>
-      </SelectContent>
-    </Select>
-  </div>
-
-  {/* 🔹 Page info (small, adaptive text) */}
-  <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground whitespace-nowrap leading-tight tracking-wide">
-    Page{" "}
-    <span className="font-medium text-foreground">{page}</span> of{" "}
-    <span className="font-medium text-foreground">{totalPages}</span>
-    {" • "}
-    <span className="font-medium text-foreground">{products.length}</span> total
-  </div>
-</div>
-
-
+            {/* ✅ Right Side — Page Size Selector + Info */}
+            <div className="flex items-center justify-end flex-wrap gap-2 sm:gap-3">
+              <div className="flex items-center gap-1.5">
+                <Select
+                  value={pageSize.toString()}
+                  onValueChange={(value) => {
+                    setPageSize(Number(value));
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger className="h-7 w-[70px] sm:w-[90px] text-[11px] sm:text-xs">
+                    <SelectValue placeholder="Rows" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground whitespace-nowrap leading-tight tracking-wide">
+                Page{" "}
+                <span className="font-medium text-foreground">{page}</span> of{" "}
+                <span className="font-medium text-foreground">{totalPages}</span>
+                {" • "}
+                <span className="font-medium text-foreground">{products.length}</span> total
+              </div>
+            </div>
           </div>
 
           {/* ✅ Scrollable Table/List Section */}
-          <ScrollArea className="h-[70vh] w-full rounded-md border bg-background shadow-sm">
+          <div className="h-[70vh] w-full overflow-x-auto overflow-y-auto rounded-md border bg-background shadow-sm">
             <AnimatePresence mode="wait">
               {viewMode === "table" ? (
                 <motion.div
@@ -238,10 +225,10 @@ const SEGMENT_API_URL = process.env.NEXT_PUBLIC_SEGMENT_API;
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -15 }}
                   transition={{ duration: 0.3 }}
-                  className="rounded-xl border bg-card shadow-md overflow-hidden"
+                  className="rounded-xl border bg-card shadow-md overflow-hidden min-w-[850px]"
                 >
                   <Table>
-                   <TableHeaderV1 />
+                    <TableHeaderV1 />
                     <TableBody>
                       {visibleProducts.map((p) => (
                         <TableRow key={p._id} className="hover:bg-muted/40">
@@ -252,11 +239,11 @@ const SEGMENT_API_URL = process.env.NEXT_PUBLIC_SEGMENT_API;
                           {/* Sale Badge */}
                           <TableCell>
                             {p.on_sale ? (
-                              <Badge className="w-20 flex items-center justify-center px-3 py-1 text-xs font-semibold text-white bg-green-600 rounded-full shadow-sm hover:bg-green-700 transition-all duration-300 ease-in-out">
+                              <Badge className="w-20 flex justify-center px-3 py-1 text-xs font-semibold text-white bg-green-600 rounded-full shadow-sm hover:bg-green-700">
                                 On Sale
                               </Badge>
                             ) : (
-                              <Badge className="w-20 flex items-center justify-center px-3 py-1 text-xs font-semibold text-gray-600 bg-gray-100 rounded-full border border-gray-300 hover:bg-gray-200 transition-all duration-300 ease-in-out">
+                              <Badge className="w-20 flex justify-center px-3 py-1 text-xs font-semibold text-gray-600 bg-gray-100 rounded-full border border-gray-300">
                                 No
                               </Badge>
                             )}
@@ -275,7 +262,7 @@ const SEGMENT_API_URL = process.env.NEXT_PUBLIC_SEGMENT_API;
                                   <Badge
                                     key={i}
                                     variant="outline"
-                                    className="px-2.5 py-[2px] text-xs font-medium rounded-full border border-border bg-gradient-to-r from-primary/10 to-purple-600/10 text-foreground shadow-sm hover:from-primary/20 hover:to-purple-600/20 transition-all duration-300 ease-in-out"
+                                    className="px-2.5 py-[2px] text-xs font-medium rounded-full border border-border bg-gradient-to-r from-primary/10 to-purple-600/10 text-foreground shadow-sm"
                                   >
                                     {tag.charAt(0).toUpperCase() + tag.slice(1)}
                                   </Badge>
@@ -352,7 +339,7 @@ const SEGMENT_API_URL = process.env.NEXT_PUBLIC_SEGMENT_API;
                 </motion.div>
               )}
             </AnimatePresence>
-          </ScrollArea>
+          </div>
         </>
       )}
     </div>
