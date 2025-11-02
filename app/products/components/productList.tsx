@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LayoutList, TableIcon, XCircle , Eye, Pencil, Trash2} from "lucide-react";
+import { LayoutList, TableIcon, XCircle, Eye, Pencil, Trash2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { PageTitle } from "@/app/products/components/header";
 import { LoaderV1 } from "@/app/products/components/loader";
@@ -39,124 +39,125 @@ export default function ProductsPage({ initialProducts }: { initialProducts: any
   const totalPages = Math.ceil(products.length / pageSize);
 
   // ✅ Fetch all products
-async function fetchProducts() {
-  try {
-    toast("Fetching products...", {
-      description: "Please wait while we load all products.",
-    });
-
-    const res = await fetch(`${PRODUCT_API_URL}`);
-    const data = await res.json();
-
-    if (data.success && Array.isArray(data.data)) {
-      setProducts(data.data);
-
-      toast.success("✅ Products loaded successfully!", {
-        description: `Showing ${data.data.length} products.`,
-      });
-    } else {
-      console.warn("Unexpected API response:", data);
-      toast.warning("⚠️ Unexpected API response.", {
-        description: "The server returned an invalid response format.",
-      });
-    }
-  } catch (error) {
-    console.error("❌ Error fetching products:", error);
-    toast.error("❌ Failed to fetch products.", {
-      description: "Please check your network connection or API server.",
-    });
-  } finally {
-    setLoading(false);
-  }
-}
-
-// ✅ Initial load
-useEffect(() => {
-  setLoading(false);
-  dispatch(toggleDialog(true));
-}, [dispatch]);
-
-// ✅ Fetch filtered data
-useEffect(() => {
-  const fetchFilteredData = async () => {
+  async function fetchProducts() {
     try {
-      if (!filters || Object.keys(filters).length === 0) return;
-
-      setProducts([]);
-      setLoading(true);
-
-      toast("🔍 Applying filters...", {
-        description: "Please wait while we fetch filtered products.",
+      toast("Fetching products...", {
+        description: "Please wait while we load all products.",
       });
 
-      const encodedFilters = encodeURIComponent(JSON.stringify(filters));
-      const response = await fetch(`${SEGMENT_API_URL}?filters=${encodedFilters}`);
-      const data = await response.json();
+      const res = await fetch(`${PRODUCT_API_URL}`);
+      const data = await res.json();
 
       if (data.success && Array.isArray(data.data)) {
         setProducts(data.data);
 
-        toast.success("🎯 Filters applied successfully!", {
-          description: `Found ${data.data.length} matching products.`,
+        toast.success("✅ Products loaded successfully!", {
+          description: `Showing ${data.data.length} products.`,
         });
       } else {
         console.warn("Unexpected API response:", data);
-        setProducts([]);
-        toast.warning("⚠️ Unexpected response.", {
-          description: "Filter results are empty or malformed.",
+        toast.warning("⚠️ Unexpected API response.", {
+          description: "The server returned an invalid response format.",
         });
       }
     } catch (error) {
-      console.error("❌ Error fetching filtered data:", error);
-      setProducts([]);
-      toast.error("❌ Failed to apply filters.", {
-        description: "Please check your connection or filter syntax.",
+      console.error("❌ Error fetching products:", error);
+      toast.error("❌ Failed to fetch products.", {
+        description: "Please check your network connection or API server.",
       });
     } finally {
       setLoading(false);
     }
+  }
+
+  // ✅ Initial load
+  useEffect(() => {
+    setLoading(false);
+    dispatch(toggleDialog(true));
+  }, [dispatch]);
+
+  // ✅ Fetch filtered data
+  useEffect(() => {
+    const fetchFilteredData = async () => {
+      try {
+        if (!filters || Object.keys(filters).length === 0) return;
+
+        setProducts([]);
+        setLoading(true);
+
+        toast("🔍 Applying filters...", {
+          description: "Please wait while we fetch filtered products.",
+        });
+
+        const encodedFilters = encodeURIComponent(JSON.stringify(filters));
+        console.log(`${SEGMENT_API_URL}?filters=${encodedFilters}`);
+        const response = await fetch(`${SEGMENT_API_URL}?filters=${encodedFilters}`);
+        const data = await response.json();
+
+        if (data.success && Array.isArray(data.data)) {
+          setProducts(data.data);
+
+          toast.success("🎯 Filters applied successfully!", {
+            description: `Found ${data.data.length} matching products.`,
+          });
+        } else {
+          console.warn("Unexpected API response:", data);
+          setProducts([]);
+          toast.warning("⚠️ Unexpected response.", {
+            description: "Filter results are empty or malformed.",
+          });
+        }
+      } catch (error) {
+        console.error("❌ Error fetching filtered data:", error);
+        setProducts([]);
+        toast.error("❌ Failed to apply filters.", {
+          description: "Please check your connection or filter syntax.",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFilteredData();
+  }, [filters]);
+
+  // ✅ Clear filters
+  const handleShowAll = async () => {
+    dispatch(resetFilters());
+    dispatch(toggleDialog(true));
+    await fetchProducts();
+
+    toast("🔄 Filters cleared", {
+      description: "All products are now visible.",
+    });
   };
 
-  fetchFilteredData();
-}, [filters]);
-
-// ✅ Clear filters
-const handleShowAll = async () => {
-  dispatch(resetFilters());
-  dispatch(toggleDialog(true));
-  await fetchProducts();
-
-  toast("🔄 Filters cleared", {
-    description: "All products are now visible.",
-  });
-};
-
-function handleView(product: any) {
-  toast("👁 Viewing product details", {
-    description: `${product.title} (${product.category})`,
-  });
-}
-
-function handleEdit(product: any) {
-  toast.info("✏️ Editing product", {
-    description: `Product: ${product.title}`,
-  });
-  // You can open an edit modal or redirect here
-}
-
-async function handleDelete(id: string) {
-  const confirmDelete = confirm("Are you sure you want to delete this product?");
-  if (!confirmDelete) return;
-
-  try {
-    toast.success("🗑 Product deleted successfully");
-    // Refresh product list
-  } catch (err) {
-    toast.error("❌ Failed to delete product", {
-      description: "Please try again later.",
+  function handleView(product: any) {
+    toast("👁 Viewing product details", {
+      description: `${product.title} (${product.category})`,
     });
   }
-}
+
+  function handleEdit(product: any) {
+    toast.info("✏️ Editing product", {
+      description: `Product: ${product.title}`,
+    });
+    // You can open an edit modal or redirect here
+  }
+
+  async function handleDelete(id: string) {
+    const confirmDelete = confirm("Are you sure you want to delete this product?");
+    if (!confirmDelete) return;
+
+    try {
+      toast.success("🗑 Product deleted successfully");
+      // Refresh product list
+    } catch (err) {
+      toast.error("❌ Failed to delete product", {
+        description: "Please try again later.",
+      });
+    }
+  }
 
   return (
     <div className="p-4 sm:p-6 md:p-8 space-y-6 flex flex-col h-screen">
@@ -338,63 +339,62 @@ async function handleDelete(id: string) {
                           <TableCell>
                             <Badge
                               variant={p.stock_status === "instock" ? "default" : "secondary"}
-                              className={`px-3 py-1 text-sm font-medium rounded-full ${
-                                p.stock_status === "instock"
+                              className={`px-3 py-1 text-sm font-medium rounded-full ${p.stock_status === "instock"
                                   ? "bg-green-100 text-green-800"
                                   : "bg-gray-100 text-gray-800"
-                              }`}
+                                }`}
                             >
                               {p.stock_status.charAt(0).toUpperCase() + p.stock_status.slice(1)}
                             </Badge>
                           </TableCell>
-                         
-<TooltipProvider>
-  <div className="flex items-center gap-2">
-    {/* 🟦 View Button */}
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          size="icon"
-          className="h-8 w-8 rounded-md bg-gray-900 text-white hover:bg-gray-600 cursor-pointer active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md"
-          onClick={() => handleView(p)}
-        >
-          <Eye className="h-4 w-4" />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent side="top">View</TooltipContent>
-    </Tooltip>
 
-    {/* 🟣 Edit Button */}
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          size="icon"
-          className="h-8 w-8 rounded-md bg-gray-900 text-white hover:bg-gray-600 cursor-pointer active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md"
-          onClick={() => handleEdit(p)}
-        >
-          <Pencil className="h-4 w-4" />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent side="top">Edit</TooltipContent>
-    </Tooltip>
+                          <TooltipProvider>
+                            <div className="flex items-center gap-2">
+                              {/* 🟦 View Button */}
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    size="icon"
+                                    className="h-8 w-8 rounded-md bg-gray-900 text-white hover:bg-gray-600 cursor-pointer active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md"
+                                    onClick={() => handleView(p)}
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">View</TooltipContent>
+                              </Tooltip>
 
-    {/* 🔴 Delete Button */}
-    <Tooltip>
-      <TooltipTrigger asChild>
-      <Button
-  size="icon"
-  variant="default"
-  className="h-8 w-8 rounded-md bg-gray-900 text-white hover:bg-gray-600 cursor-pointer active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md"
-  onClick={() => handleDelete(p._id)}
->
-  <Trash2 className="h-4 w-4" />
-</Button>
+                              {/* 🟣 Edit Button */}
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    size="icon"
+                                    className="h-8 w-8 rounded-md bg-gray-900 text-white hover:bg-gray-600 cursor-pointer active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md"
+                                    onClick={() => handleEdit(p)}
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">Edit</TooltipContent>
+                              </Tooltip>
 
-      </TooltipTrigger>
-      <TooltipContent side="top">Delete</TooltipContent>
-    </Tooltip>
-  </div>
-</TooltipProvider>
+                              {/* 🔴 Delete Button */}
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    size="icon"
+                                    variant="default"
+                                    className="h-8 w-8 rounded-md bg-gray-900 text-white hover:bg-gray-600 cursor-pointer active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md"
+                                    onClick={() => handleDelete(p._id)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+
+                                </TooltipTrigger>
+                                <TooltipContent side="top">Delete</TooltipContent>
+                              </Tooltip>
+                            </div>
+                          </TooltipProvider>
 
 
                         </TableRow>
@@ -416,68 +416,67 @@ async function handleDelete(id: string) {
                       whileHover={{ scale: 1.02 }}
                       transition={{ type: "spring", stiffness: 200 }}
                     >
-                     <Card
-  className="group relative overflow-hidden border border-border/50 
+                      <Card
+                        className="group relative overflow-hidden border border-border/50 
   bg-gradient-to-br from-background via-card to-muted/40 
   rounded-2xl shadow-sm hover:shadow-[0_4px_25px_rgba(147,51,234,0.2)] 
   hover:-translate-y-[4px] hover:border-primary/70 transition-all duration-500 ease-in-out"
->
-  {/* 🌈 Soft glowing gradient overlay */}
-  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none bg-gradient-to-r from-primary/10 via-purple-500/10 to-indigo-500/10 blur-xl" />
+                      >
+                        {/* 🌈 Soft glowing gradient overlay */}
+                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none bg-gradient-to-r from-primary/10 via-purple-500/10 to-indigo-500/10 blur-xl" />
 
-  <CardHeader className="pb-2 relative z-10">
-    <CardTitle
-      className="flex justify-between items-center text-lg font-semibold tracking-tight 
+                        <CardHeader className="pb-2 relative z-10">
+                          <CardTitle
+                            className="flex justify-between items-center text-lg font-semibold tracking-tight 
       text-foreground group-hover:text-primary transition-colors duration-300"
-    >
-      <span className="truncate max-w-[75%]">{p.title}</span>
-      <Badge
-        variant={p.stock_status === "instock" ? "default" : "secondary"}
-        className={`px-2 py-1 text-xs rounded-lg border-0 shadow-sm ${
-          p.stock_status === "instock"
-            ? "bg-gradient-to-r from-green-500/90 to-emerald-600/90 text-white"
-            : "bg-gradient-to-r from-gray-400/80 to-gray-500/80 text-white"
-        }`}
-      >
-        {p.stock_status.charAt(0).toUpperCase() + p.stock_status.slice(1)}
-      </Badge>
-    </CardTitle>
-  </CardHeader>
+                          >
+                            <span className="truncate max-w-[75%]">{p.title}</span>
+                            <Badge
+                              variant={p.stock_status === "instock" ? "default" : "secondary"}
+                              className={`px-2 py-1 text-xs rounded-lg border-0 shadow-sm ${p.stock_status === "instock"
+                                  ? "bg-gradient-to-r from-green-500/90 to-emerald-600/90 text-white"
+                                  : "bg-gradient-to-r from-gray-400/80 to-gray-500/80 text-white"
+                                }`}
+                            >
+                              {p.stock_status.charAt(0).toUpperCase() + p.stock_status.slice(1)}
+                            </Badge>
+                          </CardTitle>
+                        </CardHeader>
 
-  <CardContent className="relative z-10 text-sm text-muted-foreground space-y-3 font-sans leading-relaxed">
-    <div className="flex flex-col gap-1">
-      <p>
-        <span className="font-medium text-foreground/80">Category:</span>{" "}
-        <span className="text-foreground">{p.category || "—"}</span>
-      </p>
-      <p>
-        <span className="font-medium text-foreground/80">Price:</span>{" "}
-        <span className="text-primary font-semibold tracking-wide">
-          ${Number(p.price).toFixed(2)}
-        </span>
-      </p>
-      <p>
-        <span className="font-medium text-foreground/80">Tags:</span>{" "}
-        <span className="italic text-foreground/70">
-          {p.tags?.join(", ") || "—"}
-        </span>
-      </p>
-    </div>
+                        <CardContent className="relative z-10 text-sm text-muted-foreground space-y-3 font-sans leading-relaxed">
+                          <div className="flex flex-col gap-1">
+                            <p>
+                              <span className="font-medium text-foreground/80">Category:</span>{" "}
+                              <span className="text-foreground">{p.category || "—"}</span>
+                            </p>
+                            <p>
+                              <span className="font-medium text-foreground/80">Price:</span>{" "}
+                              <span className="text-primary font-semibold tracking-wide">
+                                ${Number(p.price).toFixed(2)}
+                              </span>
+                            </p>
+                            <p>
+                              <span className="font-medium text-foreground/80">Tags:</span>{" "}
+                              <span className="italic text-foreground/70">
+                                {p.tags?.join(", ") || "—"}
+                              </span>
+                            </p>
+                          </div>
 
-    {/* 💎 Stylish separator line */}
-    <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent my-2" />
+                          {/* 💎 Stylish separator line */}
+                          <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent my-2" />
 
-    {/* ✨ Subtle bottom accent */}
-    <div className="flex items-center justify-between">
-      <span className="text-xs text-muted-foreground">Product ID: {p.id}</span>
-      {p.on_sale && (
-        <Badge className="px-2 py-[2px] text-[10px] rounded-full font-medium bg-pink-600/90 text-white shadow-sm hover:bg-pink-700">
-          On Sale
-        </Badge>
-      )}
-    </div>
-  </CardContent>
-</Card>
+                          {/* ✨ Subtle bottom accent */}
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-muted-foreground">Product ID: {p.id}</span>
+                            {p.on_sale && (
+                              <Badge className="px-2 py-[2px] text-[10px] rounded-full font-medium bg-pink-600/90 text-white shadow-sm hover:bg-pink-700">
+                                On Sale
+                              </Badge>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
 
                     </motion.div>
                   ))}

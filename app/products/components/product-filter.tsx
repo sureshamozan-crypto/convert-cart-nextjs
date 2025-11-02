@@ -174,7 +174,8 @@ export function ProductFilterDialog() {
                   placeholder={`price = 400\ncategory = Smartphones\nstock_status = instock\nbrand != Samsung\nrating >= 4.0`}
                   value={filterText}
                   onChange={(e) => {
-                    let input = e.target.value;
+                    // 🔤 Convert entire input to lowercase
+                    let input = e.target.value.toLowerCase();
 
                     // 🧠 Automatically insert newline between multiple conditions
                     // e.g. "price = 400 category = Drinks" → "price = 400\ncategory = Drinks"
